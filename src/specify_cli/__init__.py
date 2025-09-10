@@ -827,6 +827,8 @@ def init(
         steps_lines.append("   - See GEMINI.md for all available commands")
     elif selected_ai == "copilot":
         steps_lines.append(f"{step_num}. Open in Visual Studio Code and use [bold cyan]/specify[/], [bold cyan]/plan[/], [bold cyan]/tasks[/] commands with GitHub Copilot")
+    elif selected_ai == "windsurf":
+        steps_lines.append(f"{step_num}. Open in Windsurf and use [bold cyan]/specify[/], [bold cyan]/plan[/], [bold cyan]/tasks[/] workflows with Windsurf AI")
 
     step_num += 1
     steps_lines.append(f"{step_num}. Update [bold magenta]CONSTITUTION.md[/bold magenta] with your project's non-negotiable principles")
