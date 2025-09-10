@@ -81,6 +81,46 @@ jobs:
         else
           echo "⚠️ scripts folder not found"
         fi
+
+        # Command generator (parity with automated release)
+        generate_commands() {
+          local agent=$1
+          local ext=$2
+          local arg_format=$3
+          local output_dir=$4
+
+          mkdir -p "$output_dir"
+
+          for template in templates/commands/*.md; do
+            if [[ -f "$template" ]]; then
+              name=$(basename "$template" .md)
+              description=$(awk '/^description:/ {gsub(/^description: *"?/, ""); gsub(/"$/, ""); print; exit}' "$template" | tr -d '\r')
+              content=$(awk '/^---$/{if(++count==2) start=1; next} start' "$template" | sed "s/{ARGS}/$arg_format/g")
+
+              case $ext in
+                "toml")
+                  {
+                    echo "description = \"$description\""
+                    echo ""
+                    echo "prompt = \"\"\""
+                    echo "$content"
+                    echo "\"\"\""
+                  } > "$output_dir/$name.$ext"
+                  ;;
+                "md")
+                  echo "$content" > "$output_dir/$name.$ext"
+                  ;;
+                "prompt.md")
+                  {
+                    echo "# $(echo "$description" | sed 's/\. .*//')"
+                    echo ""
+                    echo "$content"
+                  } > "$output_dir/$name.$ext"
+                  ;;
+              esac
+            fi
+          done
+        }
         
         # Create Claude Code package
         echo "Creating Claude Code package..."
@@ -132,10 +172,11 @@ jobs:
         cp -r sdd-package-base/* sdd-windsurf-package/
         mkdir -p sdd-windsurf-package/.windsurf/workflows
         if ls templates/commands/*.md >/dev/null 2>&1; then
-          cp templates/commands/*.md sdd-windsurf-package/.windsurf/workflows/
-          echo "✓ Added Windsurf workflows from templates/commands ($(ls templates/commands/*.md | wc -l) files)"
+          generate_commands "windsurf" "md" "$ARGUMENTS" "sdd-windsurf-package/.windsurf/workflows"
+          echo "✓ Generated Windsurf workflows from templates/commands ($(ls templates/commands/*.md | wc -l) files)"
         else
-          echo "⚠️ No command templates found under templates/commands"
+          echo "❌ No command templates found under templates/commands"
+          exit 1
         fi
         
         # Create archive files for each package
